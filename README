@@ -1,0 +1,2 @@
+This is a small commandline utility to list the routes in your mvc application
+Call it with the path to your appliation dll and it will list your routes
