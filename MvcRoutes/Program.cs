@@ -1,6 +1,6 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
-using System.Reflection;
 using System.Web.Routing;
 
 namespace MvcRoutes
@@ -14,6 +14,7 @@ namespace MvcRoutes
                 Console.WriteLine("Please send the path to your dll as the first argument");
                 return;
             }
+            
             CallRegisterRoutes(args);
 
             foreach (var route in RouteTable.Routes)
@@ -27,41 +28,16 @@ namespace MvcRoutes
 
         private static void CallRegisterRoutes(string[] args)
         {
-            string ClassName = "MvcApplication";
-            string MethodName = "RegisterRoutes";
+            ReflectionUtil.AssemblyName = args[0];
+            const string className = "MvcApplication";
+            const string methodName = "RegisterRoutes";
 
-            Object[] methodArgs = new[] {RouteTable.Routes};
-
-            Assembly SampleAssembly = Assembly.LoadFrom(args[0]);
-            try
-            {
-                foreach (Type type in SampleAssembly.GetTypes())
-                {
-                    if (type.FullName.EndsWith("." + ClassName))
-                    {
-                        // create an instance of the object
-
-                        object ClassObj = Activator.CreateInstance(type);
-
-                        // Dynamically Invoke the method
-
-                        type.InvokeMember(MethodName,
-                                          BindingFlags.Default | BindingFlags.InvokeMethod,
-                                          null,
-                                          ClassObj,
-                                          methodArgs);
-                    }
-                }
-            }
-            catch (ReflectionTypeLoadException ex)
-            {
-                Console.WriteLine(ex.LoaderExceptions);
-            }
+            ReflectionUtil.CallMethod(methodName, className);
         }
 
         private static string GetMethodsString(Route rt)
         {
-            string methodsString = "GET, POST, DELETE, PUT";
+            string methodsString = string.Empty;
             foreach (var constraint in rt.Constraints)
             {
                 if (constraint.Key == "HttpVerbs")
@@ -70,7 +46,77 @@ namespace MvcRoutes
                     methodsString = string.Join(", ", allowedMethods);
                 }
             }
+
+            if(methodsString == string.Empty)
+            {
+                methodsString = ResolveMethodUsingAttributes(rt);
+            }
             return methodsString;
+        }
+
+        private static Tuple<string, string> GetControllerAndActionNameFromRoute(Route rt)
+        {
+            string controllername = string.Empty;
+            string actionName = string.Empty;
+            const string controllerKey = "controller";
+            const string actionKey = "Action";
+            if (rt.Defaults.ContainsKey(controllerKey))
+            {
+                controllername = rt.Defaults[controllerKey].ToString();
+                controllername += "Controller";
+            }
+
+            if (rt.Defaults.ContainsKey(actionKey))
+                actionName = rt.Defaults[actionKey].ToString();
+
+            return new Tuple<string, string>(controllername, actionName);
+        }
+
+        private static string ResolveMethodUsingAttributes(Route rt)
+        {
+            if (rt.Defaults == null)
+                return string.Empty;
+
+            var controllerAndActionNameFromRoute = GetControllerAndActionNameFromRoute(rt);
+            string controllerName = controllerAndActionNameFromRoute.Item1;
+            string actionName = controllerAndActionNameFromRoute.Item2;
+            
+            if (string.IsNullOrEmpty(actionName))
+                return string.Empty;
+            
+            var controllerType = ReflectionUtil.GetType(controllerName);
+
+            if(controllerType == null)
+            {
+                Console.WriteLine("Controller not found even though is it marked as a controller for an action: " + controllerName);
+                return string.Empty;
+            }
+            var actionMethodInfo = controllerType.GetMethod(actionName);
+
+            var customAttributes = Attribute.GetCustomAttributes(actionMethodInfo);
+            
+            return  GetMethodsFromAttributes(customAttributes);
+        }
+
+        private static string GetMethodsFromAttributes(IEnumerable<Attribute> customAttributes)
+        {
+            var attributeToMethodName = new Dictionary<string, string>
+                                            {
+                                                {"HttpGetAttribute", "GET"},
+                                                {"HttpPostAttribute", "POST"},
+                                                {"HttpDeleteAttribute", "DELETE"},
+                                                {"HttpPutAttribute", "PUT"}
+                                            };
+            var methodList = new List<string>();
+            foreach (var customAttribute in customAttributes)
+            {
+                var attributeName = customAttribute.GetType().Name;
+                if (attributeToMethodName.ContainsKey(attributeName))
+                {
+                    methodList.Add(attributeToMethodName[attributeName]);
+                }
+            }
+            return  string.Join(",", methodList);
         }
     }
 }
