@@ -61,7 +61,7 @@ namespace MvcRoutes
 
         private static string GetMethodsString(Route rt)
         {
-            string methodsString = "GET";
+            string methodsString = "GET, POST, DELETE, PUT";
             foreach (var constraint in rt.Constraints)
             {
                 if (constraint.Key == "HttpVerbs")
