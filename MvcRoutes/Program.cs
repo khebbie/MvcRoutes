@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using System.Web.Routing;
 
 namespace MvcRoutes
@@ -49,7 +50,7 @@ namespace MvcRoutes
 
             if(methodsString == string.Empty)
             {
-                methodsString = ResolveMethodUsingAttributes(rt);
+                methodsString = GetMethodsFromAttributes(rt);
             }
             return methodsString;
         }
@@ -72,7 +73,7 @@ namespace MvcRoutes
             return new Tuple<string, string>(controllername, actionName);
         }
 
-        private static string ResolveMethodUsingAttributes(Route rt)
+        private static string GetMethodsFromAttributes(Route rt)
         {
             if (rt.Defaults == null)
                 return string.Empty;
@@ -91,8 +92,19 @@ namespace MvcRoutes
                 Console.WriteLine("Controller not found even though is it marked as a controller for an action: " + controllerName);
                 return string.Empty;
             }
-            var actionMethodInfo = controllerType.GetMethod(actionName);
+            MethodInfo actionMethodInfo;
+            try
+            {
+                actionMethodInfo = controllerType.GetMethod(actionName);
+            }
+            catch (Exception)
+            {
+                return "Unable to resolve the method am not that smart yet";
 
+            }
+
+            if (actionMethodInfo == null)
+                return string.Empty;
             var customAttributes = Attribute.GetCustomAttributes(actionMethodInfo);
             
             return  GetMethodsFromAttributes(customAttributes);
@@ -105,18 +117,19 @@ namespace MvcRoutes
                                                 {"HttpGetAttribute", "GET"},
                                                 {"HttpPostAttribute", "POST"},
                                                 {"HttpDeleteAttribute", "DELETE"},
-                                                {"HttpPutAttribute", "PUT"}
+                                                {"HttpPutAttribute", "PUT"},
+                                                {"AcceptVerbs", "Not there yet"}
                                             };
-            var methodList = new List<string>();
+            var httpMethodList = new List<string>();
             foreach (var customAttribute in customAttributes)
             {
                 var attributeName = customAttribute.GetType().Name;
                 if (attributeToMethodName.ContainsKey(attributeName))
                 {
-                    methodList.Add(attributeToMethodName[attributeName]);
+                    httpMethodList.Add(attributeToMethodName[attributeName]);
                 }
             }
-            return  string.Join(",", methodList);
+            return  string.Join(",", httpMethodList);
         }
     }
 }
