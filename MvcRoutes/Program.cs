@@ -118,7 +118,7 @@ namespace MvcRoutes
                                                 {"HttpPostAttribute", "POST"},
                                                 {"HttpDeleteAttribute", "DELETE"},
                                                 {"HttpPutAttribute", "PUT"},
-                                                {"AcceptVerbs", "Not there yet"}
+                                                {"AcceptVerbsAttribute", "AcceptVerbs - Not there yet"}
                                             };
             var httpMethodList = new List<string>();
             foreach (var customAttribute in customAttributes)
