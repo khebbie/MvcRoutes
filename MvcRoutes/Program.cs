@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using System.Web.Mvc;
 using System.Web.Routing;
 
 namespace MvcRoutes
@@ -118,7 +119,6 @@ namespace MvcRoutes
                                                 {"HttpPostAttribute", "POST"},
                                                 {"HttpDeleteAttribute", "DELETE"},
                                                 {"HttpPutAttribute", "PUT"},
-                                                {"AcceptVerbsAttribute", "AcceptVerbs - Not there yet"}
                                             };
             var httpMethodList = new List<string>();
             foreach (var customAttribute in customAttributes)
@@ -127,6 +127,10 @@ namespace MvcRoutes
                 if (attributeToMethodName.ContainsKey(attributeName))
                 {
                     httpMethodList.Add(attributeToMethodName[attributeName]);
+                }
+                else if(attributeName == "AcceptVerbsAttribute")
+                {
+                        httpMethodList.AddRange(((AcceptVerbsAttribute)customAttribute).Verbs);
                 }
             }
             return  string.Join(",", httpMethodList);
