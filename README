@@ -1,5 +1,14 @@
-This is a small commandline utility to list the routes in your mvc application
+This is a commandline utility to list the routes in your asp.net mvc application
 Call it with the path to your appliation dll and it will list your routes
+
+For the default routes in asp.net MVC you get the following output:
+{resource}.axd/{*pathInfo} httpMethods:
+{controller}/{action}/{id} httpMethods:
+
+httpMethods would be filled in if you add it to your route or decorate your action with (AccecptVerbs, HttpPost, HttpGet etc)
+
+It can help you get an overview of your routes while developing, since you get all the routes listed.
+Furthermore if you have a route to a controller not existing, MvcRoute will notify you.
 
 TODO:
 Add areas
