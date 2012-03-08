@@ -9,7 +9,7 @@ namespace MvcRoutes
         static public string AssemblyName { get; set; }
         public static void CallMethod(string methodName, string className)
         {
-            Object[] methodArgs = new[] {RouteTable.Routes};
+            var methodArgs = new object[] {RouteTable.Routes};
 
             var o = GetObject(className);
             try
@@ -19,7 +19,24 @@ namespace MvcRoutes
                                      BindingFlags.Default | BindingFlags.InvokeMethod,
                                      null,
                                      o.Item1,
-                                     methodArgs);  
+                                     methodArgs);
+            }
+            catch (MissingMethodException ex)
+            {
+                var methodInfo = o.Item2.GetMethod(methodName);
+                
+                object result = null;
+                ParameterInfo[] parameters = methodInfo.GetParameters();
+                object parameter2 = Activator.CreateInstance(parameters[1].ParameterType, null);
+
+                methodArgs = new object[] { methodArgs[0], parameter2 };
+                // Dynamically Invoke the method
+                o.Item2.InvokeMember(methodName,
+                                     BindingFlags.Default | BindingFlags.InvokeMethod,
+                                     null,
+                                     o.Item1,
+                                     methodArgs);
+                Console.WriteLine(ex);
             }
             catch (ReflectionTypeLoadException ex)
             {
