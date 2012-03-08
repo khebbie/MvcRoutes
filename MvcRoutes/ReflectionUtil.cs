@@ -24,12 +24,10 @@ namespace MvcRoutes
             catch (MissingMethodException ex)
             {
                 var methodInfo = o.Item2.GetMethod(methodName);
-                
-                object result = null;
                 ParameterInfo[] parameters = methodInfo.GetParameters();
                 object parameter2 = Activator.CreateInstance(parameters[1].ParameterType, null);
 
-                methodArgs = new object[] { methodArgs[0], parameter2 };
+                methodArgs = new[] { methodArgs[0], parameter2 };
                 // Dynamically Invoke the method
                 o.Item2.InvokeMember(methodName,
                                      BindingFlags.Default | BindingFlags.InvokeMethod,
